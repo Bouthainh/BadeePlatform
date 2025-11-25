@@ -1,7 +1,14 @@
+using BadeePlatform.Data;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+//DI for connection string 
+builder.Services.AddDbContext<MaherdbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("MaherDb")));
 
 var app = builder.Build();
 
