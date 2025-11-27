@@ -1,5 +1,6 @@
 ﻿using BadeePlatform.Data;
 using BadeePlatform.Models;
+using BadeePlatform.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,11 +8,11 @@ namespace BadeePlatform.Controllers
 {
     public class ParentController : Controller
     {
-        private readonly BadeedbContext _db;
+        private readonly IChildService _childService;
 
-        public ParentController(BadeedbContext db)
+        public ParentController(IChildService childService)
         {
-            _db = db;
+            _childService = childService;
         }
 
         public IActionResult Index()
@@ -19,42 +20,29 @@ namespace BadeePlatform.Controllers
             return View();
         }
 
-        // TODAY
         public IActionResult Register()
         {
             return View();
 
         }
 
-        // TODAY
         public IActionResult Login()
         {
             return View();
 
         }
 
-        // TODAY
-
-        public IActionResult AddChild()
+        public IActionResult AddChild(Child child)
         {
             return View();
 
         }
 
-        // TODAY
-        public IActionResult GenerateChildCode()
-        {
-            return View();
-
-        }
-
-        // TODAY
         public IActionResult EditChildProfile()
         {
             return View();
         }
 
-        // TODAY
         [HttpPost]
         public async Task<IActionResult> DeleteChildProfile(String childId)
         {
@@ -66,19 +54,24 @@ namespace BadeePlatform.Controllers
                 return RedirectToAction("Login");
             }
 
-            var child = await _db.ParentChildren.FirstOrDefaultAsync(pc => pc.ParentId == parentId && pc.ChildId == childId);
-            
-            if (child == null)
-            {
-                TempData["Error"] = "الطفل غير موجود في قائمتك";
+            try {
+                bool success = await _childService.DeleteChildProfileAsync(parentId, childId);
+
+                if (!success)
+                {
+                    TempData["DeleteChildError"] = "الطفل غير موجود في قائمتك";
+                    return RedirectToAction("ManageMultipleChildren");
+                }
+
+                TempData["DeleteChildSuccess"] = "تم حذف الطفل برقم الهوية " + childId + " بنجاح";
                 return RedirectToAction("ManageMultipleChildren");
             }
-
-            _db.ParentChildren.Remove(child);
-            await _db.SaveChangesAsync();
-            TempData["DeleteChildSuccess"] = "تم حذف الطفل برقم الهوية " + childId + " بنجاح";
-            return RedirectToAction("ManageMultipleChildren");
-        }
+            catch
+            {
+                TempData["DeleteChildError"] = "حدث خطأ غير متوقع أثناء عملية الحذف. الرجاء المحاولة لاحقاً.";
+                return RedirectToAction("ManageMultipleChildren");
+            }
+            }
 
         public IActionResult ViewChildProfile()
         {
