@@ -7,6 +7,8 @@ public partial class ChildGroup
 {
     public Guid ChildGroupId { get; set; }
 
+    public Guid? ClassId { get; set; }
+
     public string? GroupName { get; set; }
 
     public int? MatchScore { get; set; }

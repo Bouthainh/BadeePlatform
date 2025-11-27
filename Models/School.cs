@@ -16,4 +16,6 @@ public partial class School
     public virtual ICollection<Child> Children { get; set; } = new List<Child>();
 
     public virtual ICollection<Educator> Educators { get; set; } = new List<Educator>();
+
+    public virtual ICollection<Grade> Grades { get; set; } = new List<Grade>();
 }

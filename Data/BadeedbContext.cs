@@ -5,13 +5,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BadeePlatform.Data;
 
-public partial class BadeedbContext : DbContext
+public partial class BadeeDbContext : DbContext
 {
-    public BadeedbContext()
+    public BadeeDbContext()
     {
     }
 
-    public BadeedbContext(DbContextOptions<BadeedbContext> options)
+    public BadeeDbContext(DbContextOptions<BadeeDbContext> options)
         : base(options)
     {
     }
@@ -24,6 +24,8 @@ public partial class BadeedbContext : DbContext
 
     public virtual DbSet<ChildIntelligence> ChildIntelligences { get; set; }
 
+    public virtual DbSet<Class> Classes { get; set; }
+
     public virtual DbSet<Educator> Educators { get; set; }
 
     public virtual DbSet<EducatorPermission> EducatorPermissions { get; set; }
@@ -35,6 +37,8 @@ public partial class BadeedbContext : DbContext
     public virtual DbSet<GameSession> GameSessions { get; set; }
 
     public virtual DbSet<GameWorld> GameWorlds { get; set; }
+
+    public virtual DbSet<Grade> Grades { get; set; }
 
     public virtual DbSet<IntelligenceProgress> IntelligenceProgresses { get; set; }
 
@@ -49,18 +53,14 @@ public partial class BadeedbContext : DbContext
     public virtual DbSet<School> Schools { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=localhost;Database=badeedb;Trusted_Connection=True;TrustServerCertificate=True;");
 
-        if (!optionsBuilder.IsConfigured)
-        {
-            optionsBuilder.UseSqlServer("Server=.;Database=badeedb;Trusted_Connection=True;TrustServerCertificate=true");
-        }
-    }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<ActivityRecommendation>(entity =>
         {
-            entity.HasKey(e => e.RecommendationId).HasName("PK__Activity__BCABEBB78B1BE424");
+            entity.HasKey(e => e.RecommendationId).HasName("PK__Activity__BCABEBB79AAFF1F5");
 
             entity.ToTable("ActivityRecommendation");
 
@@ -82,6 +82,7 @@ public partial class BadeedbContext : DbContext
                 .HasMaxLength(10)
                 .IsUnicode(false)
                 .HasColumnName("child_ID");
+            entity.Property(e => e.ClassId).HasColumnName("class_ID");
             entity.Property(e => e.Duration).HasColumnName("duration");
             entity.Property(e => e.EducatorId)
                 .HasMaxLength(10)
@@ -91,20 +92,24 @@ public partial class BadeedbContext : DbContext
 
             entity.HasOne(d => d.Child).WithMany(p => p.ActivityRecommendations)
                 .HasForeignKey(d => d.ChildId)
-                .HasConstraintName("FK__ActivityR__child__0B91BA14");
+                .HasConstraintName("FK__ActivityR__child__778AC167");
+
+            entity.HasOne(d => d.Class).WithMany(p => p.ActivityRecommendations)
+                .HasForeignKey(d => d.ClassId)
+                .HasConstraintName("FK__ActivityR__class__7A672E12");
 
             entity.HasOne(d => d.Educator).WithMany(p => p.ActivityRecommendations)
                 .HasForeignKey(d => d.EducatorId)
-                .HasConstraintName("FK__ActivityR__educa__0A9D95DB");
+                .HasConstraintName("FK__ActivityR__educa__787EE5A0");
 
             entity.HasOne(d => d.Group).WithMany(p => p.ActivityRecommendations)
                 .HasForeignKey(d => d.GroupId)
-                .HasConstraintName("FK__ActivityR__group__0C85DE4D");
+                .HasConstraintName("FK__ActivityR__group__797309D9");
         });
 
         modelBuilder.Entity<Child>(entity =>
         {
-            entity.HasKey(e => e.ChildId).HasName("PK__Child__015BC0CDEE7BADAE");
+            entity.HasKey(e => e.ChildId).HasName("PK__Child__015BC0CD565E06AF");
 
             entity.ToTable("Child");
 
@@ -119,10 +124,7 @@ public partial class BadeedbContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("child_name");
-            entity.Property(e => e.Class)
-                .HasMaxLength(50)
-                .IsUnicode(false)
-                .HasColumnName("class");
+            entity.Property(e => e.ClassId).HasColumnName("class_ID");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(sysdatetime())")
                 .HasColumnName("created_at");
@@ -130,9 +132,7 @@ public partial class BadeedbContext : DbContext
                 .HasMaxLength(10)
                 .IsUnicode(false)
                 .HasColumnName("gender");
-            entity.Property(e => e.Grade)
-                .HasMaxLength(50)
-                .IsUnicode(false);
+            entity.Property(e => e.GradeId).HasColumnName("grade_ID");
             entity.Property(e => e.IconImgPath)
                 .IsUnicode(false)
                 .HasColumnName("Icon_img_path");
@@ -144,26 +144,35 @@ public partial class BadeedbContext : DbContext
 
             entity.HasOne(d => d.Character).WithMany(p => p.Children)
                 .HasForeignKey(d => d.CharacterId)
-                .HasConstraintName("FK__Child__character__4D94879B");
+                .HasConstraintName("FK__Child__character__72C60C4A");
 
             entity.HasOne(d => d.ChildGroup).WithMany(p => p.Children)
                 .HasForeignKey(d => d.ChildGroupId)
-                .HasConstraintName("FK__Child__child_gro__4CA06362");
+                .HasConstraintName("FK__Child__child_gro__73BA3083");
+
+            entity.HasOne(d => d.Class).WithMany(p => p.Children)
+                .HasForeignKey(d => d.ClassId)
+                .HasConstraintName("FK__Child__class_ID__75A278F5");
+
+            entity.HasOne(d => d.Grade).WithMany(p => p.Children)
+                .HasForeignKey(d => d.GradeId)
+                .HasConstraintName("FK__Child__grade_ID__76969D2E");
 
             entity.HasOne(d => d.School).WithMany(p => p.Children)
                 .HasForeignKey(d => d.SchoolId)
-                .HasConstraintName("FK__Child__school_ID__4BAC3F29");
+                .HasConstraintName("FK__Child__school_ID__74AE54BC");
         });
 
         modelBuilder.Entity<ChildGroup>(entity =>
         {
-            entity.HasKey(e => e.ChildGroupId).HasName("PK__ChildGro__37D56220C6EFEE80");
+            entity.HasKey(e => e.ChildGroupId).HasName("PK__ChildGro__37D5622085461BBF");
 
             entity.ToTable("ChildGroup");
 
             entity.Property(e => e.ChildGroupId)
                 .HasDefaultValueSql("(newsequentialid())")
                 .HasColumnName("child_group_ID");
+            entity.Property(e => e.ClassId).HasColumnName("class_ID");
             entity.Property(e => e.GroupName)
                 .HasMaxLength(50)
                 .IsUnicode(false)
@@ -173,7 +182,7 @@ public partial class BadeedbContext : DbContext
 
         modelBuilder.Entity<ChildIntelligence>(entity =>
         {
-            entity.HasKey(e => new { e.ChildId, e.IntelligenceId }).HasName("PK__ChildInt__886C13BF38E0B9E3");
+            entity.HasKey(e => new { e.ChildId, e.IntelligenceId }).HasName("PK__ChildInt__886C13BFF55ABA40");
 
             entity.ToTable("ChildIntelligence");
 
@@ -198,17 +207,48 @@ public partial class BadeedbContext : DbContext
             entity.HasOne(d => d.Child).WithMany(p => p.ChildIntelligences)
                 .HasForeignKey(d => d.ChildId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ChildInte__child__7E37BEF6");
+                .HasConstraintName("FK__ChildInte__child__7B5B524B");
 
             entity.HasOne(d => d.Intelligence).WithMany(p => p.ChildIntelligences)
                 .HasForeignKey(d => d.IntelligenceId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ChildInte__intel__7F2BE32F");
+                .HasConstraintName("FK__ChildInte__intel__7C4F7684");
+        });
+
+        modelBuilder.Entity<Class>(entity =>
+        {
+            entity.HasKey(e => e.ClassId).HasName("PK__Class__FDF57D8E71771ED5");
+
+            entity.ToTable("Class");
+
+            entity.Property(e => e.ClassId)
+                .HasDefaultValueSql("(newsequentialid())")
+                .HasColumnName("class_ID");
+            entity.Property(e => e.ClassName)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("class_name");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(sysdatetime())")
+                .HasColumnName("created_at");
+            entity.Property(e => e.EducatorId)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("educator_ID");
+            entity.Property(e => e.GradeId).HasColumnName("grade_ID");
+
+            entity.HasOne(d => d.Educator).WithMany(p => p.Classes)
+                .HasForeignKey(d => d.EducatorId)
+                .HasConstraintName("FK__Class__educator___6FE99F9F");
+
+            entity.HasOne(d => d.Grade).WithMany(p => p.Classes)
+                .HasForeignKey(d => d.GradeId)
+                .HasConstraintName("FK__Class__grade_ID__70DDC3D8");
         });
 
         modelBuilder.Entity<Educator>(entity =>
         {
-            entity.HasKey(e => e.EducatorId).HasName("PK__Educator__5C2A4BF6AF9125E5");
+            entity.HasKey(e => e.EducatorId).HasName("PK__Educator__5C2A4BF6D06CDF20");
 
             entity.ToTable("Educator");
 
@@ -228,7 +268,7 @@ public partial class BadeedbContext : DbContext
                 .HasDefaultValue(false)
                 .HasColumnName("is_verified");
             entity.Property(e => e.Password)
-                .HasMaxLength(8)
+                .HasMaxLength(256)
                 .IsUnicode(false)
                 .HasColumnName("password");
             entity.Property(e => e.PhoneNumber)
@@ -243,12 +283,12 @@ public partial class BadeedbContext : DbContext
 
             entity.HasOne(d => d.School).WithMany(p => p.Educators)
                 .HasForeignKey(d => d.SchoolId)
-                .HasConstraintName("FK__Educator__school__5535A963");
+                .HasConstraintName("FK__Educator__school__71D1E811");
         });
 
         modelBuilder.Entity<EducatorPermission>(entity =>
         {
-            entity.HasKey(e => new { e.RequestId, e.EducatorId }).HasName("PK__Educator__6D121188FB3D2DA3");
+            entity.HasKey(e => new { e.RequestId, e.EducatorId }).HasName("PK__Educator__6D1211884F628FEB");
 
             entity.ToTable("EducatorPermission");
 
@@ -273,21 +313,21 @@ public partial class BadeedbContext : DbContext
 
             entity.HasOne(d => d.Child).WithMany(p => p.EducatorPermissions)
                 .HasForeignKey(d => d.ChildId)
-                .HasConstraintName("FK__EducatorP__child__6B24EA82");
+                .HasConstraintName("FK__EducatorP__child__7D439ABD");
 
             entity.HasOne(d => d.Educator).WithMany(p => p.EducatorPermissions)
                 .HasForeignKey(d => d.EducatorId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__EducatorP__educa__6A30C649");
+                .HasConstraintName("FK__EducatorP__educa__7E37BEF6");
 
             entity.HasOne(d => d.Parent).WithMany(p => p.EducatorPermissions)
                 .HasForeignKey(d => d.ParentId)
-                .HasConstraintName("FK__EducatorP__paren__6C190EBB");
+                .HasConstraintName("FK__EducatorP__paren__7F2BE32F");
         });
 
         modelBuilder.Entity<GameCharacter>(entity =>
         {
-            entity.HasKey(e => e.CharacterId).HasName("PK__GameChar__11D466B63F5D2FBE");
+            entity.HasKey(e => e.CharacterId).HasName("PK__GameChar__11D466B6A16FD769");
 
             entity.ToTable("GameCharacter");
 
@@ -306,7 +346,7 @@ public partial class BadeedbContext : DbContext
 
         modelBuilder.Entity<GameLevel>(entity =>
         {
-            entity.HasKey(e => e.LevelId).HasName("PK__GameLeve__0345127B7EF782E5");
+            entity.HasKey(e => e.LevelId).HasName("PK__GameLeve__0345127BE830C1EE");
 
             entity.ToTable("GameLevel");
 
@@ -330,12 +370,12 @@ public partial class BadeedbContext : DbContext
 
             entity.HasOne(d => d.World).WithMany(p => p.GameLevels)
                 .HasForeignKey(d => d.WorldId)
-                .HasConstraintName("FK__GameLevel__world__72C60C4A");
+                .HasConstraintName("FK__GameLevel__world__00200768");
         });
 
         modelBuilder.Entity<GameSession>(entity =>
         {
-            entity.HasKey(e => new { e.GameId, e.LevelId, e.ChildId }).HasName("PK__GameSess__93D519606FC81C5C");
+            entity.HasKey(e => new { e.GameId, e.LevelId, e.ChildId }).HasName("PK__GameSess__93D519603730ED61");
 
             entity.ToTable("GameSession");
 
@@ -358,17 +398,17 @@ public partial class BadeedbContext : DbContext
             entity.HasOne(d => d.Child).WithMany(p => p.GameSessions)
                 .HasForeignKey(d => d.ChildId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__GameSessi__child__778AC167");
+                .HasConstraintName("FK__GameSessi__child__01142BA1");
 
             entity.HasOne(d => d.Level).WithMany(p => p.GameSessions)
                 .HasForeignKey(d => d.LevelId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__GameSessi__level__76969D2E");
+                .HasConstraintName("FK__GameSessi__level__02084FDA");
         });
 
         modelBuilder.Entity<GameWorld>(entity =>
         {
-            entity.HasKey(e => e.WorldId).HasName("PK__GameWorl__A13DB9063CD7D3FA");
+            entity.HasKey(e => e.WorldId).HasName("PK__GameWorl__A13DB906C4C7A0CF");
 
             entity.ToTable("GameWorld");
 
@@ -388,9 +428,32 @@ public partial class BadeedbContext : DbContext
                 .HasColumnName("world_name");
         });
 
+        modelBuilder.Entity<Grade>(entity =>
+        {
+            entity.HasKey(e => e.GradeId).HasName("PK__Grade__3A884EE4937B42B0");
+
+            entity.ToTable("Grade");
+
+            entity.Property(e => e.GradeId)
+                .HasDefaultValueSql("(newsequentialid())")
+                .HasColumnName("grade_ID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(sysdatetime())")
+                .HasColumnName("created_at");
+            entity.Property(e => e.GradeName)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("grade_name");
+            entity.Property(e => e.SchoolId).HasColumnName("school_ID");
+
+            entity.HasOne(d => d.School).WithMany(p => p.Grades)
+                .HasForeignKey(d => d.SchoolId)
+                .HasConstraintName("FK__Grade__school_ID__6EF57B66");
+        });
+
         modelBuilder.Entity<IntelligenceProgress>(entity =>
         {
-            entity.HasKey(e => e.ProgressId).HasName("PK__Intellig__49B0D4D9E06338BB");
+            entity.HasKey(e => e.ProgressId).HasName("PK__Intellig__49B0D4D9EBF4F61F");
 
             entity.ToTable("IntelligenceProgress");
 
@@ -412,20 +475,20 @@ public partial class BadeedbContext : DbContext
 
             entity.HasOne(d => d.Child).WithMany(p => p.IntelligenceProgresses)
                 .HasForeignKey(d => d.ChildId)
-                .HasConstraintName("FK__Intellige__child__03F0984C");
+                .HasConstraintName("FK__Intellige__child__02FC7413");
 
             entity.HasOne(d => d.Intelligence).WithMany(p => p.IntelligenceProgresses)
                 .HasForeignKey(d => d.IntelligenceId)
-                .HasConstraintName("FK__Intellige__intel__04E4BC85");
+                .HasConstraintName("FK__Intellige__intel__03F0984C");
 
             entity.HasOne(d => d.Level).WithMany(p => p.IntelligenceProgresses)
                 .HasForeignKey(d => d.LevelId)
-                .HasConstraintName("FK__Intellige__level__05D8E0BE");
+                .HasConstraintName("FK__Intellige__level__04E4BC85");
         });
 
         modelBuilder.Entity<IntelligenceType>(entity =>
         {
-            entity.HasKey(e => e.IntelligenceId).HasName("PK__Intellig__937D372903ABB0A1");
+            entity.HasKey(e => e.IntelligenceId).HasName("PK__Intellig__937D372903D4BE82");
 
             entity.ToTable("IntelligenceType");
 
@@ -446,7 +509,7 @@ public partial class BadeedbContext : DbContext
 
         modelBuilder.Entity<Parent>(entity =>
         {
-            entity.HasKey(e => e.ParentId).HasName("PK__Parent__F2D91411D6DF5106");
+            entity.HasKey(e => e.ParentId).HasName("PK__Parent__F2D91411F41356B7");
 
             entity.ToTable("Parent");
 
@@ -469,7 +532,7 @@ public partial class BadeedbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("parent_name");
             entity.Property(e => e.Password)
-                .HasMaxLength(8)
+                .HasMaxLength(256)
                 .IsUnicode(false)
                 .HasColumnName("password");
             entity.Property(e => e.PhoneNumber)
@@ -477,14 +540,14 @@ public partial class BadeedbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("phone_number");
             entity.Property(e => e.Username)
-                .HasMaxLength(8)
+                .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("username");
         });
 
         modelBuilder.Entity<ParentChild>(entity =>
         {
-            entity.HasKey(e => new { e.ParentId, e.ChildId }).HasName("PK__ParentCh__32CCA81D34F0C322");
+            entity.HasKey(e => new { e.ParentId, e.ChildId }).HasName("PK__ParentCh__32CCA81DFBF783DE");
 
             entity.ToTable("ParentChild");
 
@@ -504,17 +567,17 @@ public partial class BadeedbContext : DbContext
             entity.HasOne(d => d.Child).WithMany(p => p.ParentChildren)
                 .HasForeignKey(d => d.ChildId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ParentChi__child__5165187F");
+                .HasConstraintName("FK__ParentChi__child__05D8E0BE");
 
             entity.HasOne(d => d.Parent).WithMany(p => p.ParentChildren)
                 .HasForeignKey(d => d.ParentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ParentChi__paren__5070F446");
+                .HasConstraintName("FK__ParentChi__paren__06CD04F7");
         });
 
         modelBuilder.Entity<Request>(entity =>
         {
-            entity.HasKey(e => e.RequestId).HasName("PK__Request__18D0B537F67B87B1");
+            entity.HasKey(e => e.RequestId).HasName("PK__Request__18D0B537E5254934");
 
             entity.ToTable("Request");
 
@@ -544,20 +607,20 @@ public partial class BadeedbContext : DbContext
 
             entity.HasOne(d => d.Child).WithMany(p => p.Requests)
                 .HasForeignKey(d => d.ChildId)
-                .HasConstraintName("FK__Request__child_I__6477ECF3");
+                .HasConstraintName("FK__Request__child_I__07C12930");
 
             entity.HasOne(d => d.Educator).WithMany(p => p.Requests)
                 .HasForeignKey(d => d.EducatorId)
-                .HasConstraintName("FK__Request__educato__6383C8BA");
+                .HasConstraintName("FK__Request__educato__08B54D69");
 
             entity.HasOne(d => d.Parent).WithMany(p => p.Requests)
                 .HasForeignKey(d => d.ParentId)
-                .HasConstraintName("FK__Request__parent___656C112C");
+                .HasConstraintName("FK__Request__parent___09A971A2");
         });
 
         modelBuilder.Entity<School>(entity =>
         {
-            entity.HasKey(e => e.SchoolId).HasName("PK__School__27CB60AC67819134");
+            entity.HasKey(e => e.SchoolId).HasName("PK__School__27CB60ACE42C5A01");
 
             entity.ToTable("School");
 

@@ -5,8 +5,8 @@ namespace BadeePlatform.Services
 {
     public class ChildService : IChildService
     {
-        private readonly BadeedbContext _db;
-        public ChildService(BadeedbContext db) 
+        private readonly BadeeDbContext _db;
+        public ChildService(BadeeDbContext db) 
         {
             _db = db;
         }

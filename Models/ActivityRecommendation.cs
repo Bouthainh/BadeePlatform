@@ -13,6 +13,8 @@ public partial class ActivityRecommendation
 
     public Guid? GroupId { get; set; }
 
+    public Guid? ClassId { get; set; }
+
     public string? ActivityName { get; set; }
 
     public string? Category { get; set; }
@@ -22,6 +24,8 @@ public partial class ActivityRecommendation
     public int? Duration { get; set; }
 
     public virtual Child? Child { get; set; }
+
+    public virtual Class? Class { get; set; }
 
     public virtual Educator? Educator { get; set; }
 

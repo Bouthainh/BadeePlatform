@@ -1,14 +1,30 @@
 using BadeePlatform.Data;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Parent/Login";
+        options.AccessDeniedPath = "/Parent/AccessDenied";
+    });
+
+builder.Services.AddScoped<BadeePlatform.Services.IChildService, BadeePlatform.Services.ChildService>();
+
+builder.Services.AddScoped<BadeePlatform.Services.IParentService, BadeePlatform.Services.ParentService>();
+
+builder.Services.AddScoped<IPasswordHasher<BadeePlatform.Models.Parent>, PasswordHasher<BadeePlatform.Models.Parent>>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
 //DI for connection string 
-builder.Services.AddDbContext<BadeedbContext>(options =>
+builder.Services.AddDbContext<BadeeDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+
+
 
 var app = builder.Build();
 

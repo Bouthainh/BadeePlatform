@@ -11,9 +11,9 @@ public partial class Child
 
     public Guid? ChildGroupId { get; set; }
 
-    public string? Class { get; set; }
+    public Guid? ClassId { get; set; }
 
-    public string? Grade { get; set; }
+    public Guid? GradeId { get; set; }
 
     public Guid? CharacterId { get; set; }
 
@@ -37,9 +37,13 @@ public partial class Child
 
     public virtual ICollection<ChildIntelligence> ChildIntelligences { get; set; } = new List<ChildIntelligence>();
 
+    public virtual Class? Class { get; set; }
+
     public virtual ICollection<EducatorPermission> EducatorPermissions { get; set; } = new List<EducatorPermission>();
 
     public virtual ICollection<GameSession> GameSessions { get; set; } = new List<GameSession>();
+
+    public virtual Grade? Grade { get; set; }
 
     public virtual ICollection<IntelligenceProgress> IntelligenceProgresses { get; set; } = new List<IntelligenceProgress>();
 
