@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace BadeePlatform.Controllers
 {
-    public class ParentController : Controller
+    public class ParentController : Controller, IParentController
     {
         private readonly IChildService _childService;
         private readonly IParentService _parentService;
@@ -165,5 +165,9 @@ namespace BadeePlatform.Controllers
 
         }
 
+        public IActionResult viewParentHomePage()
+        {
+            return View();
+        }
     }
 }
