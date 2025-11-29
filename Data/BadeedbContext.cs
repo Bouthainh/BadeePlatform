@@ -5,13 +5,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BadeePlatform.Data;
 
-public partial class BadeeDbContext : DbContext
+public partial class BadeedbContext : DbContext
 {
-    public BadeeDbContext()
+    public BadeedbContext()
     {
     }
 
-    public BadeeDbContext(DbContextOptions<BadeeDbContext> options)
+    public BadeedbContext(DbContextOptions<BadeedbContext> options)
         : base(options)
     {
     }
@@ -54,7 +54,7 @@ public partial class BadeeDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=localhost;Database=badeedb;Trusted_Connection=True;TrustServerCertificate=True;");
+        => optionsBuilder.UseSqlServer("Server=.;Database=badeedb;Trusted_Connection=True;TrustServerCertificate=true");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -539,6 +539,9 @@ public partial class BadeeDbContext : DbContext
                 .HasMaxLength(10)
                 .IsUnicode(false)
                 .HasColumnName("phone_number");
+            entity.Property(e => e.Role)
+                .HasMaxLength(20)
+                .IsUnicode(false);
             entity.Property(e => e.Username)
                 .HasMaxLength(50)
                 .IsUnicode(false)

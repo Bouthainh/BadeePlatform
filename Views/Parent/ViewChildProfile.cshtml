@@ -1,5 +1,290 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model BadeePlatform.ViewModels.ChildProfileViewModel
+
 @{
+    ViewData["Title"] = "ماهر - الملف الشخصي للطفل";
 }
+
+<main>
+    <div class="main-container">
+        <section class="main-content">
+            <div class="profile-container">
+                <div class="profile-header">
+                    <h1>الملف الشخصي للطفل</h1>
+                    <div class="logo-corner">
+                        <img src="~/images/MaherLogo.png" alt="MaherLogo">
+                    </div>
+                </div>
+
+                @if (TempData["ChildProfileSuccess"] != null)
+                {
+                    <div class="alert alert-success">@TempData["ChildProfileSuccess"]</div>
+                }
+                @if (TempData["ChildProfileError"] != null)
+                {
+                    <div class="alert alert-danger">@TempData["ChildProfileError"]</div>
+                }
+
+                @if (Model == null)
+                {
+                    <div class="alert alert-warning">
+                        لم يتم تحميل بيانات الطفل. الرجاء المحاولة مرة أخرى أو العودة للقائمة.
+                    </div>
+                }
+                else
+                {
+                    <div class="profile-card">
+                        <div class="profile-avatar">
+                            @{
+                                string avatarPath = Model?.IconImgPath;
+                                if (string.IsNullOrEmpty(avatarPath))
+                                {
+                                    avatarPath = (Model?.Gender == "أنثى") ? "~/images/ChildGirl.png" : "~/images/ChildBoy.png";
+                                }
+                            }
+                            <img src="@Url.Content(avatarPath)" alt="@Model?.ChildName" />
+                        </div>
+
+                        <div class="profile-info">
+                            <h2>@Model.ChildName</h2>
+                            <p class="age">@Model.Age سنوات</p>
+                            <p class="school">@Model.SchoolName</p>
+                            <p class="access-code">الكود المخصص لدخول اللعبة: <span>@Model.LoginCode</span></p>
+                        </div>
+                    </div>
+
+                    <div class="contact-section">
+                        <p class="contact-title">إمكانية الوصول لملف الطالب من خلال المشرفين:</p>
+
+                        <div class="contact-options">
+                            @if (Model.HasPermission)
+                            {
+                                <form asp-action="RevokeEducatorAccess" asp-controller="Parent" method="post" style="display: inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="childId" value="@Model.ChildId" />
+
+                                    <div class="contact-option active">
+                                        <input type="checkbox" id="allow" checked disabled>
+                                        <label for="allow">سماح ✓</label>
+                                    </div>
+
+                                    <button type="submit" class="contact-option inactive-btn">
+                                        منع
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-action="GrantEducatorAccess" asp-controller="Parent" method="post" style="display: inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="childId" value="@Model.ChildId" />
+
+                                    <button type="submit" class="contact-option inactive-btn">
+                                        سماح
+                                    </button>
+
+                                    <div class="contact-option active">
+                                        <input type="checkbox" id="deny" checked disabled>
+                                        <label for="deny">منع ✓</label>
+                                    </div>
+                                </form>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="school-details">
+                        <h3>بيانات المدرسة</h3>
+                        <div class="detail-row">
+                            <span class="label">المدينة:</span>
+                            <span class="value">@Model.City</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">المدرسة:</span>
+                            <span class="value">@Model.SchoolName</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">المرحلة:</span>
+                            <span class="value">@Model.GradeName</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">الفصل:</span>
+                            <span class="value">@Model.ClassName</span>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.EducatorName))
+                        {
+                            <div class="detail-row">
+                                <span class="label">المعلم:</span>
+                                <span class="value">@Model.EducatorName</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="action-buttons">
+                        <form asp-action="DeleteChildProfile" asp-controller="Parent" method="post"
+                              onsubmit="return confirm('هل أنت متأكد من حذف ملف @Model.ChildName؟');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="childId" value="@Model.ChildId" />
+                            <button type="submit" class="btn btn-delete">حذف ملف الطفل</button>
+                        </form>
+
+                        <a asp-action="EditChildProfile" asp-controller="Parent" asp-route-childId="@Model.ChildId" class="btn btn-edit">
+                            تعديل معلومات الطفل
+                        </a>
+                    </div>
+
+                    <div class="sidebar-navigation">
+                        <a asp-action="ParentHomePage" asp-controller="Parent" class="sidebar-item home-icon" title="الرئيسية">🏠</a>
+                        <a asp-action="ManageMultipleChildren" asp-controller="Parent" class="sidebar-item profile-icon" title="الأطفال">👤</a>
+                        <a href="#documents" class="sidebar-item documents-icon" title="المستندات">📄</a>
+                        <a href="#tasks" class="sidebar-item tasks-icon" title="المهام">☐</a>
+                        <a href="#settings" class="sidebar-item settings-icon" title="الإعدادات">⚙️</a>
+                    </div>
+                }
+            </div>
+        </section>
+    </div>
+</main>
+
+<style>
+    .alert {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 10px;
+        text-align: center;
+        font-weight: 500;
+    }
+
+    .alert-success {
+        background: #D4EDDA;
+        color: #155724;
+        border: 1px solid #C3E6CB;
+    }
+
+    .alert-danger {
+        background: #F8D7DA;
+        color: #721C24;
+        border: 1px solid #F5C6CB;
+    }
+
+    .alert-warning {
+        background: #FFF3CD;
+        color: #856404;
+        border: 1px solid #FFEAA7;
+    }
+
+    .contact-section {
+        background: #FFF3F3;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin: 1.5rem 0;
+    }
+
+    .contact-title {
+        text-align: center;
+        color: #D07B7B;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .contact-options {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+    }
+
+    .contact-option {
+        background: white;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        border: 2px solid #DDD;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: not-allowed;
+    }
+
+        .contact-option.active {
+            background: #E8F5E9;
+            border-color: #4CAF50;
+            color: #2E7D32;
+        }
+
+    .inactive-btn {
+        background: white;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        border: 2px solid #DDD;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+        .inactive-btn:hover {
+            background: #F5F5F5;
+            border-color: #999;
+        }
+
+    .school-details {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin: 1.5rem 0;
+    }
+
+        .school-details h3 {
+            color: #8B5BA8;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #EEE;
+    }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-row .label {
+            font-weight: 600;
+            color: #666;
+        }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .btn {
+        flex: 1;
+        padding: 0.75rem;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s;
+    }
+
+    .btn-delete {
+        background: #D07B7B;
+        color: white;
+    }
+
+        .btn-delete:hover {
+            background: #C06A6A;
+        }
+
+    .btn-edit {
+        background: #8B5BA8;
+        color: white;
+    }
+
+        .btn-edit:hover {
+            background: #7A4A97;
+        }
+</style>

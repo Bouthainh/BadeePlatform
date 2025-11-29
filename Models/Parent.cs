@@ -21,6 +21,8 @@ public partial class Parent
 
     public DateTime? CreatedAt { get; set; }
 
+    public string? Role { get; set; }
+
     public virtual ICollection<EducatorPermission> EducatorPermissions { get; set; } = new List<EducatorPermission>();
 
     public virtual ICollection<ParentChild> ParentChildren { get; set; } = new List<ParentChild>();

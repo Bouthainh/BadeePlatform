@@ -7,5 +7,6 @@ namespace BadeePlatform.Services
         public Task<ServiceResult> RegisterParentAsync(RegisterParentDTO dto);
         public Task<ServiceResult> LoginParentAsync(LoginParentDTO dto);
 
+
     }
 }

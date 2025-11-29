@@ -21,7 +21,7 @@ builder.Services.AddScoped<IPasswordHasher<BadeePlatform.Models.Parent>, Passwor
 builder.Services.AddControllersWithViews();
 
 //DI for connection string 
-builder.Services.AddDbContext<BadeeDbContext>(options =>
+builder.Services.AddDbContext<BadeedbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
 

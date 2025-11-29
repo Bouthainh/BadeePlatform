@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace BadeePlatform.Controllers
@@ -27,15 +28,22 @@ namespace BadeePlatform.Controllers
 
         public IActionResult Register()
         {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                return RedirectToAction("ParentHomePage");
+            }
+
             return View(new RegisterParentDTO());
-
         }
-
 
         public IActionResult Login()
         {
-            return View(new LoginParentDTO());
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                return RedirectToAction("ParentHomePage");
+            }
 
+            return View(new LoginParentDTO());
         }
 
         [HttpPost]
@@ -43,7 +51,7 @@ namespace BadeePlatform.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return View(dto); 
+                return View(dto);
             }
 
             try
@@ -52,18 +60,19 @@ namespace BadeePlatform.Controllers
 
                 if (result.Success)
                 {
-                    TempData["Success"] = result.Message;
-                    return RedirectToAction("login");
+                    TempData["SuccessMessage"] = result.Message;
+                    return RedirectToAction("Login");
                 }
                 else
                 {
-                    TempData["Error"] = result.Message;
+                    ViewData["ErrorMessage"] = result.Message;
                     return View(dto);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                TempData["Error"] = "حدث خطأ غير متوقع أثناء عملية التسجيل.";
+                Console.WriteLine($"Register Error: {ex.Message}");
+                ViewData["ErrorMessage"] = "حدث خطأ غير متوقع أثناء عملية التسجيل.";
                 return View(dto);
             }
         }
@@ -80,20 +89,21 @@ namespace BadeePlatform.Controllers
 
             if (result.Success)
             {
+                string relationshipType = result.Data ?? "Parent";
                 var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, result.ParentId), 
-            new Claim(ClaimTypes.Name, dto.UsernameOrEmail),
-            new Claim(ClaimTypes.Role, "Parent")
-        };
+                {
+                    new Claim(ClaimTypes.NameIdentifier, result.ParentId),
+                    new Claim(ClaimTypes.Name, dto.UsernameOrEmail),
+                    new Claim("RelationshipType", relationshipType)
+                };
 
                 var claimsIdentity = new ClaimsIdentity(
                     claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
                 var authProperties = new AuthenticationProperties
                 {
-                    IsPersistent = true, 
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8) 
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
                 };
 
                 await HttpContext.SignInAsync(
@@ -101,71 +111,338 @@ namespace BadeePlatform.Controllers
                     new ClaimsPrincipal(claimsIdentity),
                     authProperties);
 
-                TempData["Success"] = result.Message; 
-                return RedirectToAction("ParentHomePage"); 
+                TempData["SuccessMessage"] = result.Message;
+                return RedirectToAction("ParentHomePage");
             }
             else
             {
-                TempData["Error"] = result.Message; 
+                ViewData["ErrorMessage"] = result.Message;
                 return View(dto);
             }
         }
 
-        public IActionResult AddChild(Child child)
+        [Authorize]
+        public async Task<IActionResult> AddChild()
         {
-            return View();
-
+            await LoadCitiesForDropdown();
+            return View(new AddChildDTO());
         }
 
-        public IActionResult EditChildProfile()
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> AddChild(AddChildDTO dto)
         {
-            return View();
+            if (!ModelState.IsValid)
+            {
+                await LoadCitiesForDropdown();
+                return View(dto);
+            }
+
+            if (dto.SchoolId == null || dto.GradeId == null || dto.ClassId == null)
+            {
+                ViewData["ErrorMessage"] = "الرجاء اختيار المدرسة والمرحلة والفصل.";
+                await LoadCitiesForDropdown();
+                return View(dto);
+            }
+
+            var parentId = GetCurrentParentId();
+            if (string.IsNullOrEmpty(parentId))
+            {
+                return RedirectToAction("Login");
+            }
+
+            string relationshipType = User.FindFirstValue("RelationshipType");
+            var result = await _childService.AddChildAsync(parentId, dto, relationshipType);
+
+            if (result.Success)
+            {
+                TempData["SuccessMessage"] = result.Message;
+
+                if (!string.IsNullOrEmpty(result.Data))
+                {
+                    TempData["LoginCode"] = result.Data;
+                }
+
+                return RedirectToAction("ManageMultipleChildren");
+            }
+            else
+            {
+                ViewData["ErrorMessage"] = result.Message;
+                await LoadCitiesForDropdown();
+                return View(dto);
+            }
         }
 
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> DeleteChildProfile(string childId)
         {
-
-            var parentId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var parentId = GetCurrentParentId();
 
             if (string.IsNullOrEmpty(parentId))
             {
                 return RedirectToAction("Login");
             }
 
-            try {
+            try
+            {
                 bool success = await _childService.DeleteChildProfileAsync(parentId, childId);
 
                 if (!success)
                 {
-                    TempData["DeleteChildError"] = "الطفل غير موجود في قائمتك";
+                    TempData["ErrorMessage"] = "الطفل غير موجود في قائمتك";
                     return RedirectToAction("ManageMultipleChildren");
                 }
 
-                TempData["DeleteChildSuccess"] = "تم حذف الطفل برقم الهوية " + childId + " بنجاح";
+                TempData["SuccessMessage"] = "تم حذف الطفل برقم الهوية " + childId + " بنجاح";
                 return RedirectToAction("ManageMultipleChildren");
             }
-            catch
+            catch (DbUpdateException ex)
             {
-                TempData["DeleteChildError"] = "حدث خطأ غير متوقع أثناء عملية الحذف. الرجاء المحاولة لاحقاً.";
+                Console.WriteLine($"Database Error in DeleteChild: {ex.Message}");
+                TempData["ErrorMessage"] = "حدث خطأ أثناء حذف البيانات من قاعدة البيانات.";
                 return RedirectToAction("ManageMultipleChildren");
             }
+            catch (InvalidOperationException ex)
+            {
+                Console.WriteLine($"Invalid Operation in DeleteChild: {ex.Message}");
+                TempData["ErrorMessage"] = "العملية غير صالحة. الرجاء المحاولة مرة أخرى.";
+                return RedirectToAction("ManageMultipleChildren");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unexpected Error in DeleteChild: {ex.Message}");
+                TempData["ErrorMessage"] = "حدث خطأ غير متوقع أثناء عملية الحذف. الرجاء المحاولة لاحقاً.";
+                return RedirectToAction("ManageMultipleChildren");
+            }
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> GetSchoolsByCity(string city)
+        {
+            if (string.IsNullOrEmpty(city))
+            {
+                return Json(new List<School>());
             }
 
-        public IActionResult ViewChildProfile()
+            var schools = await _childService.GetSchoolsByCityAsync(city);
+            return Json(schools.Select(s => new
+            {
+                id = s.SchoolId,
+                name = s.SchoolName
+            }));
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> GetGradesBySchool(string schoolId)
+        {
+            if (string.IsNullOrEmpty(schoolId) || !Guid.TryParse(schoolId, out Guid parsedSchoolId))
+            {
+                return Json(new List<Grade>());
+            }
+
+            var grades = await _childService.GetGradesBySchoolIdAsync(parsedSchoolId);
+            return Json(grades.Select(g => new
+            {
+                id = g.GradeId,
+                name = g.GradeName
+            }));
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> GetClassesByGrade(string gradeId)
+        {
+            if (string.IsNullOrEmpty(gradeId) || !Guid.TryParse(gradeId, out Guid parsedGradeId))
+            {
+                return Json(new List<Class>());
+            }
+
+            var classes = await _childService.GetClassesByGradeIdAsync(parsedGradeId);
+            return Json(classes.Select(c => new
+            {
+                id = c.ClassId,
+                name = c.ClassName,
+                educator = c.Educator?.EducatorName
+            }));
+        }
+
+        [Authorize]
+        [Route("Parent/ViewChildProfile/{childId}")]
+        public async Task<IActionResult> ViewChildProfile(string childId)
+        {
+            if (string.IsNullOrEmpty(childId))
+            {
+                TempData["ErrorMessage"] = "رقم هوية الطفل غير صحيح.";
+                return RedirectToAction("ManageMultipleChildren");
+            }
+
+            var parentId = GetCurrentParentId();
+
+            if (string.IsNullOrEmpty(parentId))
+            {
+                return RedirectToAction("Login");
+            }
+
+            var childProfile = await _childService.GetChildProfileByIdAsync(parentId, childId);
+
+            if (childProfile == null)
+            {
+                TempData["ErrorMessage"] = "الطفل غير موجود أو ليس لديك صلاحية لعرضه.";
+                return RedirectToAction("ManageMultipleChildren");
+            }
+
+            return View(childProfile);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> GrantEducatorAccess(string childId)
+        {
+            var parentId = GetCurrentParentId();
+
+            if (string.IsNullOrEmpty(parentId) || string.IsNullOrEmpty(childId))
+            {
+                return RedirectToAction("Login");
+            }
+
+            var result = await _childService.GrantEducatorAccessAsync(parentId, childId);
+
+            if (result.Success)
+            {
+                TempData["SuccessMessage"] = result.Message;
+            }
+            else
+            {
+                TempData["ErrorMessage"] = result.Message;
+            }
+
+            return RedirectToAction("ViewChildProfile", new { childId });
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> RevokeEducatorAccess(string childId)
+        {
+            var parentId = GetCurrentParentId();
+
+            if (string.IsNullOrEmpty(parentId) || string.IsNullOrEmpty(childId))
+            {
+                return RedirectToAction("Login");
+            }
+
+            var result = await _childService.RevokeEducatorAccessAsync(parentId, childId);
+
+            if (result.Success)
+            {
+                TempData["SuccessMessage"] = result.Message;
+            }
+            else
+            {
+                TempData["ErrorMessage"] = result.Message;
+            }
+
+            return RedirectToAction("ViewChildProfile", new { childId });
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> EditChildProfile(string childId)
+        {
+            if (string.IsNullOrEmpty(childId))
+            {
+                TempData["ErrorMessage"] = "رقم هوية الطفل غير صحيح";
+                return RedirectToAction("ManageMultipleChildren");
+            }
+
+            var parentId = GetCurrentParentId();
+
+            if (string.IsNullOrEmpty(parentId))
+            {
+                return RedirectToAction("Login");
+            }
+
+            var childDto = await _childService.GetChildForEditAsync(parentId, childId);
+
+            if (childDto == null)
+            {
+                TempData["ErrorMessage"] = "الطفل غير موجود أو ليس لديك صلاحية لتعديله";
+                return RedirectToAction("ManageMultipleChildren");
+            }
+
+            await LoadCitiesForDropdown();
+            ViewBag.ChildId = childId;
+
+            return View(childDto);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> EditChildProfile(string childId, EditChildDTO dto)
+        {
+            if (string.IsNullOrEmpty(childId))
+            {
+                TempData["ErrorMessage"] = "رقم هوية الطفل غير صحيح";
+                return RedirectToAction("ManageMultipleChildren");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                await LoadCitiesForDropdown();
+                ViewBag.ChildId = childId;
+                return View(dto);
+            }
+
+            var parentId = GetCurrentParentId();
+
+            if (string.IsNullOrEmpty(parentId))
+            {
+                return RedirectToAction("Login");
+            }
+
+            var result = await _childService.EditChildProfileAsync(parentId, childId, dto);
+
+            if (result.Success)
+            {
+                TempData["SuccessMessage"] = result.Message;
+                return RedirectToAction("ViewChildProfile", new { childId });
+            }
+            else
+            {
+                ViewData["ErrorMessage"] = result.Message;
+                await LoadCitiesForDropdown();
+                ViewBag.ChildId = childId;
+                return View(dto);
+            }
+        }
+
+      
+        private string GetCurrentParentId()
+        {
+            return User.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+
+        private async Task LoadCitiesForDropdown()
+        {
+            var cities = await _childService.GetAllCitiesAsync();
+            ViewBag.Cities = cities;
+        }
+
+        public IActionResult ViewParentHomePage()
         {
             return View();
-
         }
 
         public IActionResult ViewChildDashboard()
         {
             return View();
-
         }
 
-        public IActionResult viewParentHomePage()
+
+        [Authorize]
+        public async Task<IActionResult> ManageMultipleChildren()
         {
             return View();
         }
