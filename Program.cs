@@ -1,4 +1,4 @@
-using BadeePlatform.Data;
+﻿using BadeePlatform.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +42,8 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthorization();
+// for the unity api
+app.MapControllers();
 
 app.MapControllerRoute(
     name: "default",
