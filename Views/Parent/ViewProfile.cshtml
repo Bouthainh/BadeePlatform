@@ -1,0 +1,21 @@
+﻿@model ParentProfileViewModel
+
+<form asp-action="EditProfile" method="post">
+
+    <input type="hidden" asp-for="ParentId" />
+
+    <label>الاسم:</label>
+    <input asp-for="ParentName" class="form-control" />
+
+    <label>رقم الجوال:</label>
+    <input asp-for="PhoneNumber" class="form-control" />
+
+    <label>البريد الإلكتروني:</label>
+    <input asp-for="Email" class="form-control" />
+
+    <label>اسم المستخدم:</label>
+    <input asp-for="Username" class="form-control" />
+
+    <button type="submit">حفظ التغييرات</button>
+</form>
+
