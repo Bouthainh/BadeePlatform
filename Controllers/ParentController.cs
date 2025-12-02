@@ -430,21 +430,89 @@ namespace BadeePlatform.Controllers
             ViewBag.Cities = cities;
         }
 
-        public IActionResult ViewParentHomePage()
+     
+        public async Task<IActionResult> ParentHomePage()
+        {
+            var parentId = GetCurrentParentId();
+            if (string.IsNullOrEmpty(parentId)) {   
+                return RedirectToAction("Login");
+            }
+
+            var children = await _childService.GetAllChildrenByParentIdAsync(parentId);
+
+            return View(children);
+        }
+
+        public IActionResult ViewChildDashboard(string childId)//////////////under construcion :)
         {
             return View();
         }
-
-        public IActionResult ViewChildDashboard(string childId)
-        {
-            return View();
-        }
-
 
         [Authorize]
+        [HttpGet]
         public async Task<IActionResult> ManageMultipleChildren()
         {
-            return View();
+            var parentId = GetCurrentParentId();
+            if (string.IsNullOrEmpty(parentId))
+            {
+                return RedirectToAction("Login");
+            }
+
+            var children = await _childService.GetAllChildrenByParentIdAsync(parentId);
+
+            if (children == null || !children.Any())
+            {
+                ViewBag.Message = "ليس لديك أطفال مسجلين... الرجاء إضافة طفل جديد.";
+                return View (children);
+            }
+
+            return View(children); 
         }
+
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Login");
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> ViewProfile()
+        {
+            var parentId = GetCurrentParentId();
+
+            if (string.IsNullOrEmpty(parentId))
+                return RedirectToAction("Login");
+
+            var profile = await _parentService.GetParentProfileAsync(parentId);
+
+            if (profile == null)
+                return NotFound();
+
+            return View(profile);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditProfile(ParentProfileViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View("ViewProfile", model);
+
+            var success = await _parentService.UpdateParentProfileAsync(model);
+
+            if (!success)
+            {
+                TempData["Error"] = "حدث خطأ أثناء حفظ البيانات";
+                return View("ViewProfile", model);
+            }
+
+            TempData["Success"] = "تم حفظ التعديلات بنجاح";
+            return RedirectToAction("ViewProfile");
+        }
+
+
     }
 }
