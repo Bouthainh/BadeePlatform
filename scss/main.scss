@@ -24,7 +24,11 @@ body {
 
 @import 'layout/header';
 @import 'layout/footer';
+@import 'layout/sidebar';
 @import 'pages/home';
+@import 'pages/auth';
+@import 'pages/ParentHomePage';
+
 
 .container {
   flex: 1;

@@ -1,11 +1,11 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - BadeePlatform</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/main.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/BadeePlatform.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
@@ -29,12 +29,28 @@
             </div>
         </nav>
     </header>
+<div class=" sidebar-container">
+@if (ViewData["ShowSidebar"] == null || (bool)ViewData["ShowSidebar"] == true)
+{
+    <aside class="sidebar">
+        <div class="sidebar-links">
+            <a asp-action="ParentHomePage" asp-controller="Parent" class="sidebar-item home-icon" title="الرئيسية">🏠</a>
+            <a asp-action="ManageMultipleChildren" asp-controller="Parent" class="sidebar-item profile-icon" title="الأطفال">👤</a>
+            <a href="#documents" class="sidebar-item documents-icon">📄</a>
+            <a href="#tasks" class="sidebar-item tasks-icon">☐</a>
+            <a href="#settings" class="sidebar-item settings-icon">⚙️</a>
+            <a href="LogInPage.html" class="sidebar-item logout">🚪</a>
+        </div>
+    </aside>
+}
 
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
+
+</div>
 
 <footer class="site-footer">
     <div class="footer-container">
