@@ -17,21 +17,15 @@ namespace BadeePlatform.Controllers
         public Task<IActionResult> ViewChildProfile(string childId);
         public Task<IActionResult> EditChildProfile(string childId);
         public Task<IActionResult> EditChildProfile(string childId, EditChildDTO dto);
-
         public IActionResult ViewChildDashboard(string childId);
-        public IActionResult ViewParentHomePage();
-
+        public Task<IActionResult> ParentHomePage();
         public Task<IActionResult> GetSchoolsByCity(string city);
-
         public Task<IActionResult> GetGradesBySchool(string schoolId);
-
         public Task<IActionResult> GetClassesByGrade(string gradeId);
         public Task<IActionResult> GrantEducatorAccess(string childId);
         public Task<IActionResult> RevokeEducatorAccess(string childId);
-
-
-
-
+        public Task<IActionResult> ManageMultipleChildren();
+        public Task<IActionResult> Logout();
 
     }
 }

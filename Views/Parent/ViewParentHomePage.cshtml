@@ -1,3 +1,5 @@
+@model List<ChildrenViewModel>
+
 @{
     ViewData["Title"] = "ماهر -صفحة ولي الأمر ";
 }
@@ -18,61 +20,39 @@
                     
                     <div class="children-grid">
                         <div class="add-child-card">
-                            <a href="AddChildPage.html">
+                        <a asp-controller="Parent" asp-action="AddChild">
                                 <div class="add-icon">+</div>
                                 <p>اضافة طفل</p>
                             </a>
                         </div>
 
-                        <div class="child-card">
-                            <div class="child-avatar">
-                                <img src="~/images/ChildBoy.png" alt="عمر">
-                            </div>
-                            <div class="child-info">
-                                <h3>عمر</h3>
-                                <p>العمر: 6 سنوات</p>
-                                <div class="talents">
-                                    <span class="talent">🎨</span>
-                                    <span class="talent">🎵</span>
-                                    <span class="talent">⚽</span>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var child in Model)
+                        {
+                            <div class="child-card">
+                                <div class="child-avatar">
+                                    <img src="@child.IconImgPath" alt="child icon">
+                                </div>
+                                <div class="child-info">
+                                    <h3>@child.ChildName</h3>
+                                    <h3>@child.Age</h3>
+                                    <a asp-controller="Parent"
+                                       asp-action="ViewChildProfile"
+                                       asp-route-childId="@child.ChildId">
+                                        عرض الملف
+                                    </a>
                                 </div>
                             </div>
-                            <a href="#" class="view-profile-btn">عرض الملف</a>
-                        </div>
+                        }
+                    }
+                    else
+                    {
+                        <p>لا يوجد أطفال مسجلين حتى الآن</p>
+                    }
 
-                        <div class="child-card">
-                            <div class="child-avatar">
-                                <img src="~/images/ChildGirl.png" alt="لين">
-                            </div>
-                            <div class="child-info">
-                                <h3>لين</h3>
-                                <p>العمر: 5 سنوات</p>
-                                <div class="talents">
-                                    <span class="talent">🎭</span>
-                                    <span class="talent">📚</span>
-                                    <span class="talent">🧩</span>
-                                </div>
-                            </div>
-                            <a href="childProfile.html" class="view-profile-btn">عرض الملف</a>
                         </div>
-
-                        <div class="child-card">
-                            <div class="child-avatar">
-                                <img src="~/images/ChildBoy2.png" alt="عبدالرحمن">
-                            </div>
-                            <div class="child-info">
-                                <h3>عبدالرحمن</h3>
-                                <p>العمر: 7 سنوات</p>
-                                <div class="talents">
-                                    <span class="talent">🎨</span>
-                                    <span class="talent">⚽</span>
-                                </div>
-                            </div>
-                            <a href="#" class="view-profile-btn">عرض الملف</a>
-                        </div>
-                    </div>
-                </div>
-
+                  
                 <div class="notifications-section">
                     <h2>الإشعارات</h2>
                     <div class="notifications-list">
