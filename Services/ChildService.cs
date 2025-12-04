@@ -1,7 +1,7 @@
 ﻿using BadeePlatform.Data;
 using BadeePlatform.DTOs;
 using BadeePlatform.Models;
-using BadeePlatform.ViewModels;
+using BadeePlatform.Models.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace BadeePlatform.Services

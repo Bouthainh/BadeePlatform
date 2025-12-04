@@ -1,5 +1,6 @@
 ﻿using BadeePlatform.DTOs;
 using BadeePlatform.Models;
+using BadeePlatform.Models.ViewModels;
 using BadeePlatform.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
