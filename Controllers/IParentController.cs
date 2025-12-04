@@ -1,5 +1,5 @@
 ﻿using BadeePlatform.DTOs;
-using BadeePlatform.Models;
+using BadeePlatform.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BadeePlatform.Controllers
