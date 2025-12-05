@@ -1,5 +1,6 @@
 ﻿using BadeePlatform.Data;
 using BadeePlatform.DTOs;
+using BadeePlatform.Helpers;
 using BadeePlatform.Models;
 using BadeePlatform.Models.ViewModels;
 using Microsoft.EntityFrameworkCore;
@@ -534,10 +535,7 @@ namespace BadeePlatform.Services
                     ChildName = pc.Child.ChildName,
                     Age = pc.Child.Age,
                     Gender = pc.Child.Gender,
-                    IconImgPath = pc.Child.Gender == "ذكر"
-                                                    ? "/images/ChildBoy.png"
-                                                     : "/images/ChildGirl.png"
-
+                    IconImgPath = ChildExtensions.GetIconPathByGender(pc.Child.Gender)
                 })
                 .ToListAsync();
         }
